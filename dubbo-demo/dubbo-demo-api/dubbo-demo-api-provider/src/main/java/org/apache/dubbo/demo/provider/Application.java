@@ -17,12 +17,18 @@
 package org.apache.dubbo.demo.provider;
 
 import org.apache.dubbo.config.ApplicationConfig;
+import org.apache.dubbo.config.MetadataReportConfig;
 import org.apache.dubbo.config.RegistryConfig;
 import org.apache.dubbo.config.ServiceConfig;
 import org.apache.dubbo.config.bootstrap.DubboBootstrap;
 import org.apache.dubbo.demo.DemoService;
 
 import java.util.concurrent.CountDownLatch;
+
+import static org.apache.dubbo.common.constants.CommonConstants.COMPOSITE_METADATA_STORAGE_TYPE;
+import static org.apache.dubbo.common.constants.CommonConstants.REMOTE_METADATA_STORAGE_TYPE;
+import static org.apache.dubbo.common.constants.RegistryConstants.REGISTRY_TYPE_KEY;
+import static org.apache.dubbo.common.constants.RegistryConstants.SERVICE_REGISTRY_TYPE;
 
 public class Application {
     public static void main(String[] args) throws Exception {
@@ -38,16 +44,35 @@ public class Application {
     }
 
     private static void startWithBootstrap() {
+
+
+        ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-demo-api-application");
+        applicationConfig.setMetadataType(COMPOSITE_METADATA_STORAGE_TYPE);
+
+        //模拟广播 存在多个服务提供者
         ServiceConfig<DemoServiceImpl> service = new ServiceConfig<>();
         service.setInterface(DemoService.class);
         service.setRef(new DemoServiceImpl());
 
+        ServiceConfig<Demo1ServiceImpl> service1 = new ServiceConfig<>();
+        service1.setInterface(DemoService.class);
+        service1.setRef(new Demo1ServiceImpl());
+
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
-        bootstrap.application(new ApplicationConfig("dubbo-demo-api-provider"))
+        bootstrap.application(new ApplicationConfig("dubbo-demo-api-provider-0"))
                 .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
+                .application(applicationConfig)
                 .service(service)
+                .service(service1)
                 .start()
                 .await();
+
+//        bootstrap.application(new ApplicationConfig("dubbo-demo-api-provider-1"))
+//                .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
+//                .service(service1)
+//                .start()
+//                .await();
+
     }
 
     private static void startWithExport() throws InterruptedException {

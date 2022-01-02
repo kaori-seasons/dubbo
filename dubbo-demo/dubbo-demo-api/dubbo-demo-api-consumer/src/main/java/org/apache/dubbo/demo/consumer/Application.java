@@ -17,12 +17,18 @@
 package org.apache.dubbo.demo.consumer;
 
 import org.apache.dubbo.config.ApplicationConfig;
+import org.apache.dubbo.config.MetadataReportConfig;
 import org.apache.dubbo.config.ReferenceConfig;
 import org.apache.dubbo.config.RegistryConfig;
 import org.apache.dubbo.config.bootstrap.DubboBootstrap;
+import org.apache.dubbo.config.context.ConfigManager;
 import org.apache.dubbo.config.utils.ReferenceConfigCache;
 import org.apache.dubbo.demo.DemoService;
+import org.apache.dubbo.registry.RegistryService;
+import org.apache.dubbo.rpc.model.ApplicationModel;
 import org.apache.dubbo.rpc.service.GenericService;
+
+import static org.apache.dubbo.common.constants.CommonConstants.REMOTE_METADATA_STORAGE_TYPE;
 
 public class Application {
     public static void main(String[] args) {
@@ -38,14 +44,30 @@ public class Application {
     }
 
     private static void runWithBootstrap() {
+
+        ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-demo-api-application");
+        applicationConfig.setMetadataType(REMOTE_METADATA_STORAGE_TYPE);
+
+        //旧版本ApplicationModel兼容
+        ApplicationModel.setApplication("dubbo-demo-api-application-0");
+        ConfigManager configManager = ApplicationModel.getConfigManager();
+        configManager.setApplication(applicationConfig);
+        ApplicationModel.getServiceRepository().registerService(RegistryService.class);
+
         ReferenceConfig<DemoService> reference = new ReferenceConfig<>();
         reference.setInterface(DemoService.class);
         reference.setGeneric("true");
+        reference.setCluster("broadcast2");
+
+        MetadataReportConfig metadataReportConfig = new MetadataReportConfig();
+        metadataReportConfig.setRegistry("zookeeper://127.0.0.1:2181");
 
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
-        bootstrap.application(new ApplicationConfig("dubbo-demo-api-consumer"))
-                .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
+        bootstrap
+                .registry(new RegistryConfig("zookeeper://127.0.0.1:2181?client=curator"))
+                .metadataReport(metadataReportConfig)
                 .reference(reference)
+                .application(applicationConfig)
                 .start();
 
         DemoService demoService = ReferenceConfigCache.getCache().get(reference);
@@ -57,6 +79,9 @@ public class Application {
         Object genericInvokeResult = genericService.$invoke("sayHello", new String[] { String.class.getName() },
                 new Object[] { "dubbo generic invoke" });
         System.out.println(genericInvokeResult);
+
+
+
     }
 
     private static void runWithRefer() {
