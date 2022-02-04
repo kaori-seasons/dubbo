@@ -99,6 +99,9 @@ public class MetadataReportConfig extends AbstractConfig {
      */
     private String file;
 
+    //
+    private String registryIds;
+
 
     public MetadataReportConfig() {
     }
@@ -292,5 +295,13 @@ public class MetadataReportConfig extends AbstractConfig {
         } else {
             this.parameters.putAll(parameters);
         }
+    }
+
+    public String getRegistryIds() {
+        return registryIds;
+    }
+
+    public void setRegistryIds(String registryIds) {
+        this.registryIds = registryIds;
     }
 }

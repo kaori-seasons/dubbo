@@ -23,12 +23,18 @@
 
     <dubbo:application name="demo-consumer" >
         <dubbo:parameter key="mapping-type" value="metadata"/>
-        <dubbo:parameter key="enable-auto-migration" value="true"/>
+        <dubbo:parameter key="enable-auto-migration" value="false"/>
     </dubbo:application>
 
-    <dubbo:metadata-report address="zookeeper://127.0.1:2181"/>
+    <dubbo:config-center address="zookeeper://127.0.0.1:2181" include-spring-env="true" />
+    <dubbo:metadata-report id="metadataReport1"
+                           address="zookeeper://127.0.0.1:2181"
+                           group="demo,greeting" registry="dubbo1"/>
 
-    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+    <dubbo:protocol name="dubbo" port="-1"/>
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"
+                    group="demo,greeting" id="dubbo1"
+                    use-as-metadata-center="true"/>
 
     <dubbo:reference id="demoService" check="true"
                      interface="org.apache.dubbo.demo.DemoService"/>
